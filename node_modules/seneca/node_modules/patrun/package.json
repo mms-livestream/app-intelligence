@@ -1,0 +1,72 @@
+{
+  "name": "patrun",
+  "description": "A fast pattern matcher on JavaScript object properties.",
+  "homepage": "https://github.com/rjrodger/patrun",
+  "keywords": [
+    "pattern",
+    "matcher",
+    "object",
+    "property",
+    "json"
+  ],
+  "author": {
+    "name": "Richard Rodger",
+    "url": "http://richardrodger.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rjrodger/patrun.git"
+  },
+  "main": "patrun.js",
+  "version": "0.5.1",
+  "scripts": {
+    "test": "jasmine-node test",
+    "browser-test": "./test.sh",
+    "build": "./build.sh"
+  },
+  "license": "MIT",
+  "files": [
+    "patrun.js",
+    "patrun-min.js",
+    "patrun-min.map",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "lodash": "4.15.0",
+    "gex": "0.2.2"
+  },
+  "devDependencies": {
+    "jasmine-node": "1.14.5",
+    "serve": "1.4.0"
+  },
+  "gitHead": "6ff7117f93b486bf48be8be9e79ca9ad5ab54a7b",
+  "bugs": {
+    "url": "https://github.com/rjrodger/patrun/issues"
+  },
+  "_id": "patrun@0.5.1",
+  "_shasum": "5bff3757f4f3fd2bdfb6a04d27942cbec3e12f1c",
+  "_from": "patrun@0.5.1",
+  "_npmVersion": "2.15.1",
+  "_nodeVersion": "4.4.4",
+  "_npmUser": {
+    "name": "rjrodger",
+    "email": "richard.rodger@nearform.com"
+  },
+  "maintainers": [
+    {
+      "name": "rjrodger",
+      "email": "richard.rodger@nearform.com"
+    }
+  ],
+  "dist": {
+    "shasum": "5bff3757f4f3fd2bdfb6a04d27942cbec3e12f1c",
+    "tarball": "https://registry.npmjs.org/patrun/-/patrun-0.5.1.tgz"
+  },
+  "_npmOperationalInternal": {
+    "host": "packages-16-east.internal.npmjs.com",
+    "tmp": "tmp/patrun-0.5.1.tgz_1473789998340_0.36231580236926675"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/patrun/-/patrun-0.5.1.tgz",
+  "readme": "ERROR: No README data found!"
+}
