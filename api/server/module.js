@@ -11,7 +11,8 @@ module.exports = (options) => {
 
     router.post('/test', function (req, res) {
 
-        service.client.act({role:"viewers", cmd:"stats"}, console.log);
+        service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, console.log);
+
         res.sendStatus(200);
     });
 
