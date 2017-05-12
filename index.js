@@ -26,15 +26,16 @@ class Intelligence {
 let intelligence = new Intelligence();
 intelligence.service.prepare()
 .then(() => intelligence.server.listen())
-.then(() => setInterval(testtest,3000));
+.then(() => setInterval(testtest,2500));
 //.then(() => testtest());
 
 function testtest(){
 let container = [];
 let container2 = [];
 
-/*.then(() => {*/ return new Promise( (resolve, reject) => {
+/*.then(() => {*/ return new Promise( (resolve, reject) => { 
 	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, function (err, response) {
+		console.log("222222222222222");
 		container = container.concat(response.counters);
 		resolve(container);
 	});
@@ -67,14 +68,14 @@ let container2 = [];
 	let destPort = core.dConfig["NODE_REPLICATOR"].server.port;
 	let data = distrib_fin;
 	let options = {
-	  url: `http://${destHost}:${destPort}/api/manage/location`,
-	  //url: `http://192.168.2.119:8086/api/manage/location`,
-	  method: 'POST',
-	  json: true,
-	  headers: {
-		  'Content-Type': 'application/json'
-	  },
-	  body: data
+	  	url: `http://${destHost}:${destPort}/api/manage/location`,
+	  	//url: `http://192.168.2.119:8086/api/manage/location`,
+	  	method: 'POST',
+	  	json: true,
+	  	headers: {
+			'Content-Type': 'application/json'
+	  	},
+	  	body: data
 	};
 
 	request(options, function(err, res) {
@@ -109,13 +110,68 @@ let container2 = [];
 		});
 	})
 })
+.then( (container2) => {
+	return new Promise( (resolve, reject) => {
+		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"bitrates"}, function (err, response) {
+			console.log(response.bitrate);
+			container2 = container2.concat(response.bitrate);
+			resolve(container2);
+		});
+	})
+})
 .then( (container2) => { let new_servers = {};
-	for (let i in container2[1]){
-		//console.log(i);
-		for (let j in container2[1][i]){
-			//console.log(container2[1][i][j]);
-			if (new_servers[container2[1][i][j]] === undefined)
-				new_servers[container2[1][i][j]] = container2[0][i];
+	for (let i in container2[1]){	// i is a video (uploader:?)
+		for (let j in container2[1][i]){	// container2[1][i] is a list of viewers
+			if (new_servers[container2[1][i][j]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
+				new_servers[container2[1][i][j]] = container2[0][i];	// container2[0][i] is the list of possible servers for the viewer
+				if (container2[0][i].length == 3){
+					let alea = Math.floor(Math.random() * 2) + 2;
+					if (alea == 2){
+						let maxi = 0;
+						let index = -1;
+						for (let k in container2[0][i]){
+							if (container2[2][container2[0][i][k]] >= maxi){
+								maxi = container2[2][container2[0][i][k]];
+								index = k;
+							}
+						}
+						new_servers[container2[1][i][j]].splice(index,1);
+					}
+				}else if (container2[0][i].length == 4){
+					let alea = Math.floor(Math.random() * 3) + 2;
+					if (alea == 3){
+						let maxi = 0;
+						let index = -1;
+						for (let k in container2[0][i]){
+							if (container2[2][container2[0][i][k]] >= maxi){
+								maxi = container2[2][container2[0][i][k]];
+								index = k;
+							}
+						}
+						new_servers[container2[1][i][j]].splice(index,1);
+					}else if (alea == 2){
+						let maxi = 0;
+						let index = -1;
+						for (let k in container2[0][i]){
+							if (container2[2][container2[0][i][k]] >= maxi){
+								maxi = container2[2][container2[0][i][k]];
+								index = k;
+							}
+						}
+						new_servers[container2[1][i][j]].splice(index,1);
+						container2[2][container2[0][i][index]] = -Infinity;
+						maxi = 0;
+						index = -1;
+						for (let k in container2[0][i]){
+							if (container2[2][container2[0][i][k]] >= maxi){
+								maxi = container2[2][container2[0][i][k]];
+								index = k;
+							}
+						}
+						new_servers[container2[1][i][j]].splice(index,1);
+					}
+				}
+			}
 		}
 	}
 	console.log("new_servers: "+new_servers);
@@ -128,8 +184,8 @@ let container2 = [];
 })
 .then((container2) => {
 	return new Promise( (resolve, reject) => {
-		console.log(">>>>> VERIF ENTREE VIEWER SERVERS >>>>>> " +container2[2]);
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[2]}, function (err, response) {
+		console.log(">>>>> VERIF ENTREE VIEWER SERVERS >>>>>> " +container2[3]);
+		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[3]}, function (err, response) {
 		    resolve(container2);
     	})
   	})
@@ -137,13 +193,13 @@ let container2 = [];
 //.then(() => intelligence.server.close);
 }
 
-let serversAdd = ["http://192.168.2.100:8087","http://192.168.2.130:8087","http://192.168.2.122:8087","4th server"];
+let serversAdd = ["http://192.168.2.100:8087","http://192.168.2.122:8087","http://192.168.2.130:8087","4th server"];
 function update(servers, viewers, distrib, uploaders, serversAdd){
 	//let charge_max = 20;
 	let ups_non_pop=[];  // vidéos non-populaires
 	let ups_pop=[];  // vidéos populaires
 	let median;
-	console.log("DEBUT FCT UPDATE uploaders :" + uploaders);
+	console.log("DEBUT FCT UPDATE viewers :" + viewers);
 	
 		
     if (tools.isEmpty(distrib)){
@@ -158,12 +214,15 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 		}
     	return(distrib);
     }
-
 	let nbr_viewers = [];
+	if (viewers['uploader:1'] == undefined)
+		viewers['uploader:1'] = 0;
 	for (let j in viewers){
-		nbr_viewers = nbr_viewers.concat(viewers[j]);
+		if (viewers[j]!=undefined)
+			nbr_viewers = nbr_viewers.concat(viewers[j]);
 	}
-	median = math.median(nbr_viewers);
+	if (nbr_viewers!=[])
+		median = math.median(nbr_viewers);
 
 	if (nbr_viewers.length>=2){  // number of videos
 		for (let i in viewers){
@@ -183,16 +242,16 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 	}
 
     for (let i in ups_pop){
-		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=10)
+		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=3)
 			distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[2]);
-		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=20)
+		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=5)
         	distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[3]);
 	}
 
 	for (let i in ups_non_pop){
-		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<20)
+		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<5)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
-		else if (distrib[ups_non_pop[i]].length > 2 && viewers[ups_non_pop[i]]<10)
+		else if (distrib[ups_non_pop[i]].length > 2 && viewers[ups_non_pop[i]]<3)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
 	}
 
