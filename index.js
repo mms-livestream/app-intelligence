@@ -35,7 +35,6 @@ let container2 = [];
 
 /*.then(() => {*/ return new Promise( (resolve, reject) => { 
 	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, function (err, response) {
-		console.log("222222222222222");
 		container = container.concat(response.counters);
 		resolve(container);
 	});
@@ -49,20 +48,17 @@ let container2 = [];
 .then( (container) => { return new Promise( (resolve, reject) => {
 	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"get"}, function (err, response) {
     container = container.concat(response.lists);
-	console.log(">>>>>>>>>>>>>> WHAT DO I GET>>>>> "+response.lists);
     container = container.concat(JSON.parse(JSON.stringify(response.lists)));
 	resolve(container);
 	});
 }) })
 .then( (container) => { return new Promise( (resolve, reject) => {
 	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploaders", cmd:"list"}, function (err, response) {
-		console.log(response.uploaders);
     	container = container.concat(response.uploaders);
 		resolve(container);
 	});
 }) })
 .then( (container) => {let distrib_fin = update(container[1], container[0],container[2],container[4], serversAdd);
-	console.log(">>>>>>>> WHAT IT BECOMES >>>> "+distrib_fin);
     let destHost = "192.168.2.100";
 	//let destHost = core.dConfig["NODE_REPLICATOR"].server.host;
 	let destPort = core.dConfig["NODE_REPLICATOR"].server.port;
@@ -100,11 +96,9 @@ let container2 = [];
 		tmp[i]=container[5][i];
 	}
 
-	console.log(tmp);
 	container2 = container2.concat(tmp);
 	return new Promise( (resolve, reject) => {
 		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"list"}, function (err, response) {
-			console.log(response.lists);
 			container2 = container2.concat(response.lists);
 			resolve(container2);
 		});
@@ -113,75 +107,79 @@ let container2 = [];
 .then( (container2) => {
 	return new Promise( (resolve, reject) => {
 		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"bitrates"}, function (err, response) {
-			console.log(response.bitrate);
 			container2 = container2.concat(response.bitrate);
 			resolve(container2);
 		});
 	})
 })
-.then( (container2) => { let new_servers = {};
-	for (let i in container2[1]){	// i is a video (uploader:?)
-		for (let j in container2[1][i]){	// container2[1][i] is a list of viewers
-			if (new_servers[container2[1][i][j]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
-				new_servers[container2[1][i][j]] = container2[0][i];	// container2[0][i] is the list of possible servers for the viewer
-				if (container2[0][i].length == 3){
-					let alea = Math.floor(Math.random() * 2) + 2;
-					if (alea == 2){
-						let maxi = 0;
-						let index = -1;
-						for (let k in container2[0][i]){
-							if (container2[2][container2[0][i][k]] >= maxi){
-								maxi = container2[2][container2[0][i][k]];
-								index = k;
+.then( (container2) => { 
+	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {
+		if (response.modification == "yes") {
+			let new_servers = {};
+			for (let i in container2[1]){	// i is a video (uploader:?)
+				let slicesUploader = i.split(":");
+				for (let j in container2[1][i]){	// container2[1][i] is a list of viewers
+					let slicesViewer = container2[1][i][j].split(":");
+					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
+						new_servers[slicesViewer[1]] = {"id_uploader":slicesUploader[1],"servers":container2[0][i]};	// container2[0][i] is the list of possible servers for the viewer
+						if (container2[0][i].length == 3){
+							let alea = Math.floor(Math.random() * 2) + 2;
+							if (alea == 2){
+								let maxi = 0;
+								let index = -1;
+								for (let k in container2[0][i]){
+									if (container2[2][container2[0][i][k]] >= maxi){
+										maxi = container2[2][container2[0][i][k]];
+										index = k;
+									}
+								}
+								new_servers[slicesViewer[1]]["servers"].splice(index,1);
+							}
+						}else if (container2[0][i].length == 4){
+							let alea = Math.floor(Math.random() * 3) + 2;
+							if (alea == 3){
+								let maxi = 0;
+								let index = -1;
+								for (let k in container2[0][i]){
+									if (container2[2][container2[0][i][k]] >= maxi){
+										maxi = container2[2][container2[0][i][k]];
+										index = k;
+									}
+								}
+								new_servers[slicesViewer[1]]["servers"].splice(index,1);
+							}else if (alea == 2){
+								let maxi = 0;
+								let index = -1;
+								for (let k in container2[0][i]){
+									if (container2[2][container2[0][i][k]] >= maxi){
+										maxi = container2[2][container2[0][i][k]];
+										index = k;
+									}
+								}
+								new_servers[slicesViewer[1]]["servers"].splice(index,1);
+								container2[2][container2[0][i][index]] = -Infinity;
+								maxi = 0;
+								index = -1;
+								for (let k in container2[0][i]){
+									if (container2[2][container2[0][i][k]] >= maxi){
+										maxi = container2[2][container2[0][i][k]];
+										index = k;
+									}
+								}
+								new_servers[slicesViewer[1]]["servers"].splice(index,1);
 							}
 						}
-						new_servers[container2[1][i][j]].splice(index,1);
-					}
-				}else if (container2[0][i].length == 4){
-					let alea = Math.floor(Math.random() * 3) + 2;
-					if (alea == 3){
-						let maxi = 0;
-						let index = -1;
-						for (let k in container2[0][i]){
-							if (container2[2][container2[0][i][k]] >= maxi){
-								maxi = container2[2][container2[0][i][k]];
-								index = k;
-							}
-						}
-						new_servers[container2[1][i][j]].splice(index,1);
-					}else if (alea == 2){
-						let maxi = 0;
-						let index = -1;
-						for (let k in container2[0][i]){
-							if (container2[2][container2[0][i][k]] >= maxi){
-								maxi = container2[2][container2[0][i][k]];
-								index = k;
-							}
-						}
-						new_servers[container2[1][i][j]].splice(index,1);
-						container2[2][container2[0][i][index]] = -Infinity;
-						maxi = 0;
-						index = -1;
-						for (let k in container2[0][i]){
-							if (container2[2][container2[0][i][k]] >= maxi){
-								maxi = container2[2][container2[0][i][k]];
-								index = k;
-							}
-						}
-						new_servers[container2[1][i][j]].splice(index,1);
 					}
 				}
 			}
+			container2 = container2.concat(new_servers);
+		  	return new Promise( (resolve, reject) => {
+				intelligence.service.cli.NODE_SESSION_MANAGER.act({role:"mpd", cmd:"update"},{data:new_servers} );
+				intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[3]});
+		  	})
 		}
-	}
-	console.log("new_servers: "+new_servers);
-	container2 = container2.concat(new_servers);
-  	return new Promise( (resolve, reject) => {
-		intelligence.service.cli.NODE_SESSION_MANAGER.act({role:"mpd", cmd:"update"},{data:new_servers}, function (err, response) {
-		    resolve(container2);
-    	})
-  	})
-})
+	})
+})/*
 .then((container2) => {
 	return new Promise( (resolve, reject) => {
 		console.log(">>>>> VERIF ENTREE VIEWER SERVERS >>>>>> " +container2[3]);
@@ -189,7 +187,7 @@ let container2 = [];
 		    resolve(container2);
     	})
   	})
-})
+})*/
 //.then(() => intelligence.server.close);
 }
 
@@ -199,8 +197,6 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 	let ups_non_pop=[];  // vidéos non-populaires
 	let ups_pop=[];  // vidéos populaires
 	let median;
-	console.log("DEBUT FCT UPDATE viewers :" + viewers);
-	
 		
     if (tools.isEmpty(distrib)){
 		distrib["new"] = [];
@@ -264,7 +260,6 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 				distrib[uploaders[i]]=distrib["new"];
 		}
 	}
-	console.log(distrib);
 	return(distrib);
 }
 
