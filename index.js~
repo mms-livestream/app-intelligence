@@ -26,7 +26,7 @@ class Intelligence {
 let intelligence = new Intelligence();
 intelligence.service.prepare()
 .then(() => intelligence.server.listen())
-.then(() => setInterval(testtest,2800));
+.then(() => setInterval(testtest,2500));
 //.then(() => testtest());
 
 function testtest(){
