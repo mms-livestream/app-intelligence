@@ -112,17 +112,26 @@ let container2 = [];
 		});
 	})
 })
+.then( (container2) => {
+	return new Promise( (resolve, reject) => {
+		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"publishTime", cmd:"get"}, function (err, response) {
+			container2 = container2.concat(response.publishTime);
+			resolve(container2);
+		});
+	})
+})
 .then( (container2) => { 
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {
+	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {	
 		if (response.modification == "yes") {
 			let new_servers = {};
 			for (let i in container2[1]){	// i is a video (uploader:?)
+				let publishTime = response.publishTime;
 				let slicesUploader = i.split(":");
-				for (let j in container2[1][i]){	// container2[1][i] is a list of viewers
-					let slicesViewer = container2[1][i][j].split(":");
+				for (let j in container2[1][i]["viewers"]){	// container2[1][i] is a list of viewers
+					let slicesViewer = container2[1][i]["viewers"][j].split(":");
 					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
-						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":container2[0][i]};	// container2[0][i] is the list of possible servers for the viewer
-						if (container2[0][i].length == 3){
+						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":container2[0][i], "publishTime":container2[3][i]};	// container2[0][i] is the list of possible servers for the viewer
+					if (container2[0][i].length == 3){
 							let alea = Math.floor(Math.random() * 2) + 2;
 							if (alea == 2){
 								let maxi = 0;
@@ -175,7 +184,7 @@ let container2 = [];
 			container2 = container2.concat(new_servers);
 		  	return new Promise( (resolve, reject) => {
 				intelligence.service.cli.NODE_SESSION_MANAGER.act({role:"mpd", cmd:"update"},{data:new_servers} );
-				intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[3]});
+				intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[4]});
 		  	})
 		}
 	})
