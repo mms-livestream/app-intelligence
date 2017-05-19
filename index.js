@@ -131,7 +131,8 @@ let container2 = [];
 					let slicesViewer = container2[1][i]["viewers"][j].split(":");
 					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
 						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":container2[0][i], "publishTime":container2[3][i]};	// container2[0][i] is the list of possible servers for the viewer
-					if (container2[0][i].length == 3){
+console.log(	container2[0]);				    
+if (container2[0][i].length == 3){
 							let alea = Math.floor(Math.random() * 2) + 2;
 							if (alea == 2){
 								let maxi = 0;
@@ -200,7 +201,7 @@ let container2 = [];
 //.then(() => intelligence.server.close);
 }
 
-let serversAdd = ["192.168.2.100","192.168.2.130","192.168.2.122","4th server"];
+let serversAdd = ["192.168.2.130", "192.168.2.122","192.168.2.100","4th server"];
 function update(servers, viewers, distrib, uploaders, serversAdd){
 	//let charge_max = 20;
 	let ups_non_pop=[];  // vidéos non-populaires
