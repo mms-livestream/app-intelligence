@@ -33,7 +33,7 @@ function testtest(){
 let container = [];
 let container2 = [];
 
-/*.then(() => {*/ return new Promise( (resolve, reject) => { 
+/*.then(() => {*/ return new Promise( (resolve, reject) => {
 	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, function (err, response) {
 		container = container.concat(response.counters);
 		resolve(container);
@@ -82,7 +82,7 @@ let container2 = [];
 		    console.log("Error:" + err);
 		}
 	});
-	
+
 	return new Promise( (resolve, reject) => {
 		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"update"},{distribution:distrib_fin}, function (err, response) {
 			container = container.concat(distrib_fin);
@@ -120,8 +120,8 @@ let container2 = [];
 		});
 	})
 })
-.then( (container2) => { 
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {	
+.then( (container2) => {
+	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {
 		if (response.modification == "yes") {
 			let new_servers = {};
 			for (let i in container2[1]){	// i is a video (uploader:?)
@@ -131,7 +131,7 @@ let container2 = [];
 					let slicesViewer = container2[1][i]["viewers"][j].split(":");
 					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
 						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":container2[0][i], "publishTime":container2[3][i]};	// container2[0][i] is the list of possible servers for the viewer
-console.log(	container2[0]);				    
+console.log(	container2[0]);
 if (container2[0][i].length == 3){
 							let alea = Math.floor(Math.random() * 2) + 2;
 							if (alea == 2){
@@ -201,13 +201,13 @@ if (container2[0][i].length == 3){
 //.then(() => intelligence.server.close);
 }
 
-let serversAdd = ["192.168.2.130", "192.168.2.122","192.168.2.100","4th server"];
+let serversAdd = ["192.168.2.137", "192.168.2.119","192.168.2.110","4th server"];
 function update(servers, viewers, distrib, uploaders, serversAdd){
 	//let charge_max = 20;
 	let ups_non_pop=[];  // vidéos non-populaires
 	let ups_pop=[];  // vidéos populaires
 	let median;
-		
+
     if (tools.isEmpty(distrib)){
 		distrib["new"] = [];
 		distrib["new"] = distrib["new"].concat(serversAdd[0]);
@@ -248,16 +248,16 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 	}
 
     for (let i in ups_pop){
-		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=3)
+		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=5)
 			distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[2]);
-		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=5)
+		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=8)
         	distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[3]);
 	}
 
 	for (let i in ups_non_pop){
-		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<5)
+		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<8)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
-		else if (distrib[ups_non_pop[i]].length > 2 && viewers[ups_non_pop[i]]<3)
+		else if (distrib[ups_non_pop[i]].length > 2 && viewers[ups_non_pop[i]]<5)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
 	}
 
