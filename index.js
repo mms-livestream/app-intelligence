@@ -26,182 +26,182 @@ class Intelligence {
 let intelligence = new Intelligence();
 intelligence.service.prepare()
 .then(() => intelligence.server.listen())
-.then(() => setInterval(testtest,2800));
-//.then(() => testtest());
+.then(() => setInterval(turn,2800)); // we execute the function 'turn' every 2800 ms
 
-function testtest(){
-let container = [];
-let container2 = [];
+function turn(){
+  let container = []; // container will contain information that we get from DB or we compute so that we don't lose them from a 'Promise' to the following 'Promise'
+  let container2 = []; // container2 will be used for the same objective starting from the moment we send the decision to the replicator and the DB.
 
-/*.then(() => {*/ return new Promise( (resolve, reject) => {
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, function (err, response) {
-		container = container.concat(response.counters);
-		resolve(container);
-	});
-}) // } )
-.then( (container) => { return new Promise( (resolve, reject) => {
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"stats"}, function (err, response) {
-		container = container.concat(response.counters);
-		resolve(container);
-	});
-}) })
-.then( (container) => { return new Promise( (resolve, reject) => {
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"get"}, function (err, response) {
-    container = container.concat(response.lists);
-    container = container.concat(JSON.parse(JSON.stringify(response.lists)));
-	resolve(container);
-	});
-}) })
-.then( (container) => { return new Promise( (resolve, reject) => {
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploaders", cmd:"list"}, function (err, response) {
-    	container = container.concat(response.uploaders);
-		resolve(container);
-	});
-}) })
-.then( (container) => {let distrib_fin = update(container[1], container[0],container[2],container[4], serversAdd);
+  return new Promise( (resolve, reject) => {
+  	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"stats"}, function (err, response) {
+      // Here we put the number of viewers for the videos in container[0]
+  		container = container.concat(response.counters);
+  		resolve(container);
+  	});
+  }) // } )
+  .then( (container) => { return new Promise( (resolve, reject) => {
+  	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"stats"}, function (err, response) {
+      // Here we put the number of connexions on every server in container[1]
+  		container = container.concat(response.counters);
+  		resolve(container);
+  	});
+  }) })
+  .then( (container) => { return new Promise( (resolve, reject) => {
+  	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"get"}, function (err, response) {
+      // Here we put the previous list of servers for every video in container[2]
+      container = container.concat(response.lists);
+      // Here we put the same thing like container[2] but in an object that wouldn't be modified in container[3]
+      container = container.concat(JSON.parse(JSON.stringify(response.lists)));
+  	resolve(container);
+  	});
+  }) })
+  .then( (container) => { return new Promise( (resolve, reject) => {
+  	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploaders", cmd:"list"}, function (err, response) {
+      // Here we put the list of videos in container[4]
+      container = container.concat(response.uploaders);
+  		resolve(container);
+  	});
+  }) })
+  .then( (container) => {let distrib_fin = update(container[1], container[0],container[2],container[4], serversAdd); // New replication decision
+    // Here we put the address of the Replicator
     let destHost = "192.168.2.100";
-	//let destHost = core.dConfig["NODE_REPLICATOR"].server.host;
-	let destPort = core.dConfig["NODE_REPLICATOR"].server.port;
-	let data = distrib_fin;
-	let options = {
-	  	url: `http://${destHost}:${destPort}/api/manage/location`,
-	  	//url: `http://192.168.2.119:8086/api/manage/location`,
-	  	method: 'POST',
-	  	json: true,
-	  	headers: {
-			'Content-Type': 'application/json'
-	  	},
-	  	body: data
-	};
+  	//let destHost = core.dConfig["NODE_REPLICATOR"].server.host;
+  	let destPort = core.dConfig["NODE_REPLICATOR"].server.port;
+  	let data = distrib_fin;
+  	let options = {
+  	  	url: `http://${destHost}:${destPort}/api/manage/location`,
+  	  	method: 'POST',
+  	  	json: true,
+  	  	headers: {
+  			'Content-Type': 'application/json'
+  	  	},
+  	  	body: data
+  	};
 
-	request(options, function(err, res) {
-		if (!err && res.statusCode === 200) {
-		    console.log("OK sent");
-		}
-		else {
-		    console.log("Error:" + err);
-		}
-	});
+  	request(options, function(err, res) {
+  		if (!err && res.statusCode === 200) {
+  		    console.log("OK sent");
+  		}
+  		else {
+  		    console.log("Error:" + err);
+  		}
+  	});
 
-	return new Promise( (resolve, reject) => {
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"update"},{distribution:distrib_fin}, function (err, response) {
-			container = container.concat(distrib_fin);
-			resolve(container);
-		});
-	});
-})
-.then( (container) => { let tmp = {};
-	let list_vid=[];
-	for (let i in container[5]) {
-		tmp[i]=container[5][i];
-	}
-
-	container2 = container2.concat(tmp);
-	return new Promise( (resolve, reject) => {
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"list"}, function (err, response) {
-			container2 = container2.concat(response.lists);
-			resolve(container2);
-		});
-	})
-})
-.then( (container2) => {
-	return new Promise( (resolve, reject) => {
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"bitrates"}, function (err, response) {
-			container2 = container2.concat(response.bitrate);
-			resolve(container2);
-		});
-	})
-})
-.then( (container2) => {
-	return new Promise( (resolve, reject) => {
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"publishTime", cmd:"get"}, function (err, response) {
-			container2 = container2.concat(response.publishTime);
-			resolve(container2);
-		});
-	})
-})
-.then( (container2) => {
-	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {
-		if (response.modification == "yes") {
-			let new_servers = {};
-			for (let i in container2[1]){	// i is a video (uploader:?)
-				let publishTime = response.publishTime;
-				let slicesUploader = i.split(":");
-				for (let j in container2[1][i]["viewers"]){	// container2[1][i] is a list of viewers
-					let slicesViewer = container2[1][i]["viewers"][j].split(":");
-					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
-						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":container2[0][i], "publishTime":container2[3][i]};	// container2[0][i] is the list of possible servers for the viewer
-console.log(	container2[0]);
-if (container2[0][i].length == 3){
-							let alea = Math.floor(Math.random() * 2) + 2;
-							if (alea == 2){
-								let maxi = 0;
-								let index = -1;
-								for (let k in container2[0][i]){
-									if (container2[2][container2[0][i][k]] >= maxi){
-										maxi = container2[2][container2[0][i][k]];
-										index = k;
-									}
-								}
-								new_servers[slicesViewer[1]]["servers"].splice(index,1);
-							}
-						}else if (container2[0][i].length == 4){
-							let alea = Math.floor(Math.random() * 3) + 2;
-							if (alea == 3){
-								let maxi = 0;
-								let index = -1;
-								for (let k in container2[0][i]){
-									if (container2[2][container2[0][i][k]] >= maxi){
-										maxi = container2[2][container2[0][i][k]];
-										index = k;
-									}
-								}
-								new_servers[slicesViewer[1]]["servers"].splice(index,1);
-							}else if (alea == 2){
-								let maxi = 0;
-								let index = -1;
-								for (let k in container2[0][i]){
-									if (container2[2][container2[0][i][k]] >= maxi){
-										maxi = container2[2][container2[0][i][k]];
-										index = k;
-									}
-								}
-								new_servers[slicesViewer[1]]["servers"].splice(index,1);
-								container2[2][container2[0][i][index]] = -Infinity;
-								maxi = 0;
-								index = -1;
-								for (let k in container2[0][i]){
-									if (container2[2][container2[0][i][k]] >= maxi){
-										maxi = container2[2][container2[0][i][k]];
-										index = k;
-									}
-								}
-								new_servers[slicesViewer[1]]["servers"].splice(index,1);
-							}
-						}
-					}
-				}
-			}
-			container2 = container2.concat(new_servers);
-		  	return new Promise( (resolve, reject) => {
-				intelligence.service.cli.NODE_SESSION_MANAGER.act({role:"mpd", cmd:"update"},{data:new_servers} );
-				intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[4]});
-		  	})
-		}
-	})
-})/*
-.then((container2) => {
-	return new Promise( (resolve, reject) => {
-		console.log(">>>>> VERIF ENTREE VIEWER SERVERS >>>>>> " +container2[3]);
-		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[3]}, function (err, response) {
-		    resolve(container2);
-    	})
+  	return new Promise( (resolve, reject) => {
+  		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"uploader_servers", cmd:"update"},{distribution:distrib_fin}, function (err, response) {
+        // Here we put the new servers for every video in container[5]
+        container = container.concat(distrib_fin);
+  			resolve(container);
+  		});
+  	});
+  })
+  .then( (container) => { let tmp = {};
+  	for (let i in container[5]) {
+  		tmp[i]=container[5][i];
+  	}
+    // Here we put the new servers for every video in container2[0]
+  	container2 = container2.concat(tmp);
+  	return new Promise( (resolve, reject) => {
+  		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewers", cmd:"list"}, function (err, response) {
+        // Here we put the list of viewers for every video in container2[1]
+  			container2 = container2.concat(response.lists);
+  			resolve(container2);
+  		});
   	})
-})*/
-//.then(() => intelligence.server.close);
-}
+  })
+  .then( (container2) => {
+  	return new Promise( (resolve, reject) => {
+  		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"servers", cmd:"bitrates"}, function (err, response) {
+        // Here we put the bitrate of every distribution server in container2[2]
+  			container2 = container2.concat(response.bitrate);
+  			resolve(container2);
+  		});
+  	})
+  })
+  .then( (container2) => {
+  	return new Promise( (resolve, reject) => {
+  		intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"publishTime", cmd:"get"}, function (err, response) {
+        // Here we put the publishTime of every video in container2[3]
+  			container2 = container2.concat(response.publishTime);
+  			resolve(container2);
+  		});
+  	})
+  })
+  .then( (container2) => {
+  	intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"modif", cmd:"verif"}, function (err, response) {
+      // Here we verify if a new Viewer is added, if that's the case, we make a new decision for the servers from which every viewer can watch the video
+  		if (response.modification == "yes") {
+  			let new_servers = {};
+  			for (let i in container2[1]){	// i is a video (uploader:?)
+  				let publishTime = response.publishTime;
+  				let slicesUploader = i.split(":");
+  				for (let j in container2[1][i]["viewers"]){	// container2[1][i] is a list of viewers
+            let list_tmp = JSON.parse(JSON.stringify(container2));
+  					let slicesViewer = container2[1][i]["viewers"][j].split(":");
+  					if (new_servers[slicesViewer[1]] === undefined){		// new_servers[container2[1][i][j]] is a list of servers for each viewer
+  						new_servers[slicesViewer[1]] = {"id_uploader": parseInt(slicesUploader[1]),"servers":list_tmp[0][i], "publishTime":container2[3][i]};	// container2[0][i] is the list of possible servers for the viewer
+              if (list_tmp[0][i].length == 3){ // There are three distribution servers
+                if (Math.floor(Math.random() * 2) + 2 == 2){ // Randomly we give 2 or 3 servers for the Viewer
+  								let maxi = 0;
+  								let index = -1;
+  								for (let k in list_tmp[0][i]){
+  									if (container2[2][list_tmp[0][i][k]] >= maxi){
+  										maxi = container2[2][list_tmp[0][i][k]];
+  										index = k;
+  									}
+  								}
+  								new_servers[slicesViewer[1]]["servers"].splice(index,1);
+  							}
+  						}else if (list_tmp[0][i].length == 4){ // There are four distribution servers
+  							let alea = Math.floor(Math.random() * 2) + 3; // Randomly we give 3 or 4 servers for the Viewer, we can put '* 3' instead of '* 2' if we want to give 2 servers also
+  							if (alea == 3){
+  								let maxi = 0;
+  								let index = -1;
+  								for (let k in list_tmp[0][i]){
+  									if (container2[2][list_tmp[0][i][k]] >= maxi){
+  										maxi = container2[2][list_tmp[0][i][k]];
+  										index = k;
+  									}
+  								}
+  								new_servers[slicesViewer[1]]["servers"].splice(index,1);
+  							}else if (alea == 2){
+  								let maxi = 0;
+  								let index = -1;
+  								for (let k in list_tmp[0][i]){
+  									if (container2[2][list_tmp[0][i][k]] >= maxi){
+  										maxi = container2[2][list_tmp[0][i][k]];
+  										index = k;
+  									}
+  								}
+                  new_servers[slicesViewer[1]]["servers"].splice(index,1);
+  								container2[2][list_tmp[0][i][index]] = -Infinity;
+  								maxi = 0;
+  								index = -1;
+  								for (let k in list_tmp[0][i]){
+  									if (container2[2][list_tmp[0][i][k]] >= maxi){
+  										maxi = container2[2][list_tmp[0][i][k]];
+  										index = k;
+  									}
+  								}
+  								new_servers[slicesViewer[1]]["servers"].splice(index,1);
 
-let serversAdd = ["192.168.2.137", "192.168.2.119","192.168.2.110","4th server"];
+  							}
+  						}
+  					}
+  				}
+  			}
+  			container2 = container2.concat(new_servers);
+  		  	return new Promise( (resolve, reject) => {
+  				intelligence.service.cli.NODE_SESSION_MANAGER.act({role:"mpd", cmd:"update"},{data:new_servers} );
+  				intelligence.service.cli.NODE_DB_CONTROLLER.act({role:"viewer_servers", cmd:"update"},{distribution:container2[4]});
+  		  	})
+  		}
+  	})
+  })
+}
+// Here we put the list of the distribution servers, we can get them from the database if we want
+let serversAdd = ["192.168.2.100","192.168.2.119","192.168.2.122","192.168.2.110"];
+// This function gives the new distribution servers for every video, this method was adapted for the demo
 function update(servers, viewers, distrib, uploaders, serversAdd){
 	//let charge_max = 20;
 	let ups_non_pop=[];  // vidéos non-populaires
@@ -239,7 +239,6 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 				ups_pop=ups_pop.concat(i);
 			}
 		}
-		console.log("mediane egale a : ", median);
 	}else{
 		for (let i in viewers){
 			ups_pop=ups_pop.concat(i);
@@ -248,14 +247,14 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 	}
 
     for (let i in ups_pop){
-		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=5)
+		if (distrib[ups_pop[i]].length == 2 && viewers[ups_pop[i]]>=5) // 5 is a threshold to add a third server, it can be modified
 			distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[2]);
-		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=8)
+		else if (distrib[ups_pop[i]].length == 3 && viewers[ups_pop[i]]>=10) // 10 is a threshold to add a fourth server, it can be modified
         	distrib[ups_pop[i]] = distrib[ups_pop[i]].concat(serversAdd[3]);
 	}
 
 	for (let i in ups_non_pop){
-		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<8)
+		if (distrib[ups_non_pop[i]].length > 3 && viewers[ups_non_pop[i]]<10)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
 		else if (distrib[ups_non_pop[i]].length > 2 && viewers[ups_non_pop[i]]<5)
 	      	distrib[ups_non_pop[i]]=distrib[ups_non_pop[i]].splice(-1,1);
@@ -272,6 +271,8 @@ function update(servers, viewers, distrib, uploaders, serversAdd){
 	}
 	return(distrib);
 }
+
+// This part was used in the first version of the intelligence, modifications have been made in order to do a good video demo, despite the fact that lack of time made us unable to do a live demo in the amphi.
 
 /*
 	for (let i in servers){
